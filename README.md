@@ -14,6 +14,7 @@ Name | Default | Description
 `Title` | "" | Title
 `Artist` | "" | Artist
 `Album` | "" | Album
+`Cover` | "" | Description too long; read below this table.
 `CoverWebAddress` | "" | URL of the current cover image, useful for doing an onChangeAction as cover will update twice when when the media changes. This will only update once and only once the image has been downloaded to the disk.
 `Duration` | "0:00" | Duration in (hh):mm:ss (Hours are optional)
 `Position` | "0:00" | Position in (hh):mm:ss (Hours are optional)
@@ -26,7 +27,7 @@ Name | Default | Description
 ### `Cover`
 String returning the path to the current cover art, or the path to the default cover if none is found.  
 **Note:** Do not assume the image will always be a square. It won't in most cases.  
-**Attributes:**
+**Attributes:**  
 CoverPath - A system path to where to store the album art.  
 DefaultPath - A system path to what image to use as fallback.
 
