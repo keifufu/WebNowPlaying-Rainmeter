@@ -5,7 +5,7 @@ Allows for retrieval of media information and playback control from various webs
 
 Included in this repo is an example skin shows how to use every measure and bang.
 
-## Measure Types:
+## Measure Types
 Name | Default | Description
 --- | --- | ---
 `Player` | "" | Current player, e.g. YouTube, Spotify, etc.
@@ -39,7 +39,7 @@ Name | Parameters | Description
 `SetPosition` | double (##.####) | Sets the medias playback position in percent from 1-100. Add + or - in front to set the position relatively.
 `SetVolume` | int | Set the medias volume from 1-100. Add + or - in front to set the position relatively.
 `Repeat` | none | Toggles through repeat modes
-`Shuffle` | none | Toggles shuffle mode`
+`Shuffle` | none | Toggles shuffle mode
 `ToggleThumbsUp` | none | Toggles thumbs up or similar
 `ToggleThumbsDown` | none | Toggles thumbs down or similar
 `SetRating` | int | Sites with a binary rating system fall back to: 0 = None; 1 = Thumbs Down; 5 = Thumbs Up
