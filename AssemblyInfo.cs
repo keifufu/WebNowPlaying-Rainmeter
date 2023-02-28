@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 
 [assembly: AssemblyCopyright("Copyright © keifufu & Trevor Hamilton 2023")]
-[assembly: AssemblyVersion("1.0.0")]
+[assembly: AssemblyVersion("1.0.1")]
 
 // Do not change the entries below!
 #if X64

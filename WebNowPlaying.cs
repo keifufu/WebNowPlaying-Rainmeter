@@ -133,7 +133,9 @@ namespace WebNowPlaying {
 
         if (playerType == PlayerTypes.Cover) {
           string temp = api.ReadPath("CoverPath", null);
-          if (temp.Length > 0) CoverOutputLocation = temp;
+          // Only set CoverOutputLocation if it hasn't already been set
+          // Otherwise it changes it when a new skin loads WebNowPlaying
+          if (CoverOutputLocation != Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "/Temp/Rainmeter/WebNowPlaying/cover.png" && temp.Length > 0) CoverOutputLocation = temp;
           temp = api.ReadPath("DefaultPath", null);
           if (temp.Length > 0) CoverDefaultLocation = temp;
         } else if (playerType == PlayerTypes.Progress) {
