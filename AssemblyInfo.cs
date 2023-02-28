@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-[assembly: AssemblyCopyright("Copyright © keifufu & Trevor Hamilton 2023")]
+[assembly: AssemblyCopyright("© 2023 - keifufu, Trevor Hamilton")]
 [assembly: AssemblyVersion("1.0.1")]
 
 // Do not change the entries below!
