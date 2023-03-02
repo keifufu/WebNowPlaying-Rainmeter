@@ -42,8 +42,8 @@ namespace WebNowPlaying {
 
       try {
         HttpWebRequest httpWebRequest = (HttpWebRequest) HttpWebRequest.Create(CoverUrl);
-        using (HttpWebResponse httpWebReponse = (HttpWebResponse) httpWebRequest.GetResponse()) {
-          using (Stream stream = httpWebReponse.GetResponseStream()) {
+        using (HttpWebResponse httpWebResponse = (HttpWebResponse) httpWebRequest.GetResponse()) {
+          using (Stream stream = httpWebResponse.GetResponseStream()) {
             Byte[] image = ReadStream(stream);
             WriteStream(image);
             LastDownloadedCoverUrl = CoverUrl;
@@ -135,7 +135,8 @@ namespace WebNowPlaying {
           string temp = api.ReadPath("CoverPath", null);
           // Only set CoverOutputLocation if it hasn't already been set
           // Otherwise it changes it when a new skin loads WebNowPlaying
-          if (CoverOutputLocation != Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "/Temp/Rainmeter/WebNowPlaying/cover.png" && temp.Length > 0) CoverOutputLocation = temp;
+          bool isCoverDefaultLocation = CoverOutputLocation == Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "/Temp/Rainmeter/WebNowPlaying/cover.png";
+          if (isCoverDefaultLocation && temp.Length > 0) CoverOutputLocation = temp;
           temp = api.ReadPath("DefaultPath", null);
           if (temp.Length > 0) CoverDefaultLocation = temp;
         } else if (playerType == PlayerTypes.Progress) {
