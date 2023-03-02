@@ -3,7 +3,7 @@ A Rainmeter Adapter for [WebNowPlaying-Redux](https://github.com/keifufu/WebNowP
 
 Allows for retrieval of media information and playback control from various websites such as spotify, soundcloud or youtube. See all supported websites [here](https://github.com/keifufu/WebNowPlaying-Redux).
 
-Included in this repo is an example skin shows how to use every measure and bang.
+Included in this repo is an example skin that shows how to use every measure and bang.
 
 ## Measure Types
 Name | Default | Description
