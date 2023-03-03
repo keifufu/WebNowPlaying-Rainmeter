@@ -30,6 +30,7 @@ namespace WebNowPlaying {
     private static string CoverOutputLocation = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "/Temp/Rainmeter/WebNowPlaying/cover.png";
     private string CoverDefaultLocation = "";
     private static string LastDownloadedCoverUrl = "";
+    private static string LastFailedCoverUrl = "";
 
     private static string rainmeterFileSettingsLocation = "";
 
@@ -51,7 +52,8 @@ namespace WebNowPlaying {
         }
       } catch (Exception e) {
         API.Log(API.LogType.Error, $"WebNowPlaying.dll - Unable to get album art from: {CoverUrl}");
-        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e.Data}");
+        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e}");
+        LastFailedCoverUrl = CoverUrl;
       }
     }
     private static byte[] ReadStream(Stream input) {
@@ -87,7 +89,7 @@ namespace WebNowPlaying {
 
       } catch (Exception e) {
         API.Log(API.LogType.Error, $"WebNowPlaying.dll - Unable to download album art to: {CoverOutputLocation}");
-        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e.Data}");
+        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e}");
       }
     }
 
@@ -117,7 +119,7 @@ namespace WebNowPlaying {
         WNPRedux.Initialize(8974, adapterVersion, logger, true);
       } catch (Exception e) {
         API.Log(API.LogType.Error, "WebNowPlaying.dll - Error initializing WNPRedux");
-        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e.Data}");
+        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e}");
       }
     }
 
@@ -144,7 +146,7 @@ namespace WebNowPlaying {
         }
       } catch (Exception e) {
         API.Log(API.LogType.Error, "WebNowPlaying.dll - Unknown PlayerType:" + playerTypeString);
-        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e.Data}");
+        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e}");
         playerType = PlayerTypes.Status;
       }
     }
@@ -165,7 +167,7 @@ namespace WebNowPlaying {
             WNPRedux.mediaEvents.SetRating(Convert.ToInt16(bang.Substring(bang.LastIndexOf(" ") + 1)));
           } catch (Exception e) {
             API.Log(API.LogType.Error, "WebNowPlaying.dll - Failed to parse rating number, assuming 0");
-            API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e.Data}");
+            API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e}");
             WNPRedux.mediaEvents.SetRating(0);
           }
         } else if (bang.Contains("setposition ")) {
@@ -182,7 +184,7 @@ namespace WebNowPlaying {
             }
           } catch (Exception e) {
             API.Log(API.LogType.Error, $"WebNowPlaying.dll - SetPosition argument could not be converted to a double: {args}");
-            API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e.Data}");
+            API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e}");
           }
         } else if (bang.Contains("setvolume ")) {
           try {
@@ -198,19 +200,19 @@ namespace WebNowPlaying {
             }
           } catch (Exception e) {
             API.Log(API.LogType.Error, $"WebNowPlaying.dll - SetVolume argument could not be converted to a double: {args}");
-            API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e.Data}");
+            API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e}");
           }
         } else {
           API.Log(API.LogType.Warning, $"WebNowPlaying.dll - Unknown bang: {args}");
         }
       } catch (Exception e) {
         API.Log(API.LogType.Error, $"WebNowPlaying.dll - Error using bang: {args}");
-        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e.Data}");
+        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e}");
       }
     }
 
     internal virtual double Update() {
-      if (WNPRedux.mediaInfo.CoverUrl.Length > 0 && LastDownloadedCoverUrl != WNPRedux.mediaInfo.CoverUrl && Uri.IsWellFormedUriString(WNPRedux.mediaInfo.CoverUrl, UriKind.RelativeOrAbsolute))
+      if (WNPRedux.mediaInfo.CoverUrl.Length > 0 && LastFailedCoverUrl != WNPRedux.mediaInfo.CoverUrl && LastDownloadedCoverUrl != WNPRedux.mediaInfo.CoverUrl && Uri.IsWellFormedUriString(WNPRedux.mediaInfo.CoverUrl, UriKind.RelativeOrAbsolute))
         DownloadCoverImage();
 
       try {
@@ -246,7 +248,7 @@ namespace WebNowPlaying {
         }
       } catch (Exception e) {
         API.Log(API.LogType.Error, "WebNowPlaying.dll - Error doing update cycle");
-        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e.Data}");
+        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e}");
       }
 
       return 0.0;
@@ -278,7 +280,7 @@ namespace WebNowPlaying {
         }
       } catch (Exception e) {
         API.Log(API.LogType.Error, "WebNowPlaying.dll - Error doing getString cycle");
-        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e.Data}");
+        API.Log(API.LogType.Debug, $"WebNowPlaying Trace: {e}");
       }
 
       return null;
