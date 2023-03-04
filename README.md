@@ -1,4 +1,5 @@
 # WebNowPlaying-Redux Adapter for Rainmeter
+# Rainmeter Adapter for WebNowPlaying-Redux
 A Rainmeter Adapter for [WebNowPlaying-Redux](https://github.com/keifufu/WebNowPlaying-Redux).
 
 Allows for retrieval of media information and playback control from various websites such as spotify, soundcloud or youtube. See all supported websites [here](https://github.com/keifufu/WebNowPlaying-Redux).
