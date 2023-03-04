@@ -44,3 +44,6 @@ Name | Parameters | Description
 `ToggleThumbsUp` | none | Toggles thumbs up or similar
 `ToggleThumbsDown` | none | Toggles thumbs down or similar
 `SetRating` | int | Sites with a binary rating system fall back to: 0 = None; 1 = Thumbs Down; 5 = Thumbs Up
+
+## Building from Source
+You will need to open 'Turn Windows features on or off' and ensure that .NET Framework 3.5 is enabled, as pictured [here](https://oldimg.noonly.net/06BR2GT605.jpg).
