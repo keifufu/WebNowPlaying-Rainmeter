@@ -1,4 +1,3 @@
-# WebNowPlaying-Redux Adapter for Rainmeter
 # Rainmeter Adapter for WebNowPlaying-Redux
 A Rainmeter Adapter for [WebNowPlaying-Redux](https://github.com/keifufu/WebNowPlaying-Redux).
 
