@@ -6,6 +6,7 @@ Allows for retrieval of media information and playback control from various webs
 Included in this repo is an example skin that shows how to use every measure and bang.
 
 ## Measure Types
+These are declared using `PlayerType=`
 Name | Default | Description
 --- | --- | ---
 `Player` | "" | Current player, e.g. YouTube, Spotify, etc.
