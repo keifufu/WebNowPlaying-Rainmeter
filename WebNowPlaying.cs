@@ -28,7 +28,7 @@ namespace WebNowPlaying {
     }
 
     // Default cover art location, if not set by the skin
-    private static string CoverOutputLocation = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "/Temp/Rainmeter/WebNowPlaying/cover.png";
+    private static string CoverOutputLocation = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Temp\\Rainmeter\\WebNowPlaying\\cover.png";
     private string CoverDefaultLocation = "";
     private static string LastDownloadedCoverUrl = "";
     private static string LastFailedCoverUrl = "";
@@ -39,9 +39,9 @@ namespace WebNowPlaying {
       string CoverUrl = WNPRedux.mediaInfo.CoverUrl;
       if (CoverUrl.Length == 0 || LastFailedCoverUrl == CoverUrl || LastDownloadedCoverUrl == CoverUrl || !Uri.IsWellFormedUriString(CoverUrl, UriKind.RelativeOrAbsolute)) return;
 
-      if (CoverOutputLocation == Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "/Temp/Rainmeter/WebNowPlaying/cover.png") {
+      if (CoverOutputLocation == Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Temp\\Rainmeter\\WebNowPlaying\\cover.png") {
         // Make sure the path folder exists if using it
-        Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "/Temp/Rainmeter/WebNowPlaying");
+        Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Temp\\Rainmeter\\WebNowPlaying");
       }
 
       ServicePointManager.ServerCertificateValidationCallback = (s, cert, chain, ssl) => true;
@@ -124,7 +124,7 @@ namespace WebNowPlaying {
           string temp = api.ReadPath("CoverPath", null);
           // Only set CoverOutputLocation if it hasn't already been set
           // Otherwise it changes it when a new skin loads WebNowPlaying
-          bool isCoverDefaultLocation = CoverOutputLocation == Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "/Temp/Rainmeter/WebNowPlaying/cover.png";
+          bool isCoverDefaultLocation = CoverOutputLocation == Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Temp\\Rainmeter\\WebNowPlaying\\cover.png";
           if (isCoverDefaultLocation && temp.Length > 0) CoverOutputLocation = temp;
           temp = api.ReadPath("DefaultPath", null);
           if (temp.Length > 0) CoverDefaultLocation = temp;
@@ -253,10 +253,10 @@ namespace WebNowPlaying {
             return WNPRedux.mediaInfo.Album;
           case PlayerTypes.Cover:
             if (WNPRedux.mediaInfo.CoverUrl.Length > 0 && LastDownloadedCoverUrl == WNPRedux.mediaInfo.CoverUrl && Uri.IsWellFormedUriString(WNPRedux.mediaInfo.CoverUrl, UriKind.RelativeOrAbsolute))
-              return CoverOutputLocation;
+              return CoverOutputLocation.Replace("/", "\\");
             else if (CoverDefaultLocation.Length > 0)
-              return CoverDefaultLocation;
-            return CoverOutputLocation;
+              return CoverDefaultLocation.Replace("/", "\\");
+            return CoverOutputLocation.Replace("/", "\\");
           case PlayerTypes.CoverWebAddress:
             return WNPRedux.mediaInfo.CoverUrl;
           case PlayerTypes.Position:
