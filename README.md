@@ -29,8 +29,8 @@ Name | Default | Description
 String returning the path to the current cover art, or the path to the default cover if none is found.  
 **Note:** Do not assume the image will always be a square. It won't in most cases.  
 **Attributes:**  
-CoverPath - A system path to where to store the album art.  
-DefaultPath - A system path to what image to use as fallback.
+DefaultPath - A system path to what image to use as fallback.  
+~~CoverPath - A system path where the cover image is stored if no other skin registered it first. There is no guarantee for the image to be saved here, do not use it.~~
 
 ## Bangs
 Name | Parameters | Description
