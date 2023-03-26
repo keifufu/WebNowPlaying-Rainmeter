@@ -6,6 +6,9 @@ using System.Net.Http;
 using System.IO;
 using WNPReduxAdapterLibrary;
 using System.Net;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace WebNowPlaying {
   internal class Measure {
@@ -28,66 +31,82 @@ namespace WebNowPlaying {
     }
 
     // Default cover art location, if not set by the skin
-    private static string CoverOutputLocation = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Temp\\Rainmeter\\WebNowPlaying\\cover.png";
+    private static readonly string DefaultCoverOutputLocation = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Temp\\Rainmeter\\WebNowPlaying\\cover.png";
     private string CoverDefaultLocation = "";
     private static string LastDownloadedCoverUrl = "";
     private static string LastFailedCoverUrl = "";
-    private static string rainmeterFileSettingsLocation = "";
     private PlayerTypes playerType = PlayerTypes.Status;
+    private static readonly ConcurrentDictionary<string, int> CoverPathDictionary = new ConcurrentDictionary<string, int>() { [DefaultCoverOutputLocation] = 1 };
+    private string _CoverPath = "";
 
     public static void DownloadCoverImage() {
+      if (isInThread) return;
       string CoverUrl = WNPRedux.mediaInfo.CoverUrl;
       if (CoverUrl.Length == 0 || LastFailedCoverUrl == CoverUrl || LastDownloadedCoverUrl == CoverUrl || !Uri.IsWellFormedUriString(CoverUrl, UriKind.RelativeOrAbsolute)) return;
 
-      if (CoverOutputLocation == Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Temp\\Rainmeter\\WebNowPlaying\\cover.png") {
-        // Make sure the path folder exists if using it
-        Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Temp\\Rainmeter\\WebNowPlaying");
-      }
+      isInThread = true;
+      Thread thread = new Thread(DownloadImageThread);
+      thread.Start();
+    }
 
-      ServicePointManager.ServerCertificateValidationCallback = (s, cert, chain, ssl) => true;
-      ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
+    private static readonly object _lock = new object();
+    private static bool isInThread = false;
+    private static void DownloadImageThread() {
+      lock (_lock) {
+        string CoverUrl = WNPRedux.mediaInfo.CoverUrl;
 
-      // This is a mess, but it works for now :)
-      using (var httpClientHandler = new HttpClientHandler()) {
-        httpClientHandler.AllowAutoRedirect = true;
-        httpClientHandler.MaxAutomaticRedirections = 3;
-        using (var httpClient = new HttpClient(httpClientHandler)) {
-          HttpResponseMessage response = httpClient.GetAsync(CoverUrl).Result;
+        ServicePointManager.ServerCertificateValidationCallback = (s, cert, chain, ssl) => true;
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
 
-          if (response.StatusCode == HttpStatusCode.OK) {
-            using (Stream inputStream = response.Content.ReadAsStreamAsync().Result)
-            using (Stream outputStream = File.OpenWrite(CoverOutputLocation)) {
-              inputStream.CopyTo(outputStream);
+        void SaveToFiles(Stream inputStream) {
+          // Write to all cover paths for backwards compatibility, this also includes the default path
+          foreach (KeyValuePair<string, int> entry in CoverPathDictionary) {
+            if (entry.Value > 0) {
+              // Make sure the path exists
+              Directory.CreateDirectory(entry.Key.Substring(0, entry.Key.LastIndexOf("\\")));
+              using (Stream outputStream = File.OpenWrite(entry.Key)) {
+                inputStream.Position = 0;
+                inputStream.CopyTo(outputStream);
+              }
             }
-            LastDownloadedCoverUrl = CoverUrl;
-          } else if (response.StatusCode == (HttpStatusCode)308) {
-            string redirectUrl = response.Headers.Location.ToString();
-            response = httpClient.GetAsync(redirectUrl).Result;
+          }
+        }
+
+        using (var httpClientHandler = new HttpClientHandler()) {
+          httpClientHandler.AllowAutoRedirect = true;
+          httpClientHandler.MaxAutomaticRedirections = 3;
+          using (var httpClient = new HttpClient(httpClientHandler)) {
+            HttpResponseMessage response = httpClient.GetAsync(CoverUrl).Result;
 
             if (response.StatusCode == HttpStatusCode.OK) {
               using (Stream inputStream = response.Content.ReadAsStreamAsync().Result)
-              using (Stream outputStream = File.OpenWrite(CoverOutputLocation)) {
-                inputStream.CopyTo(outputStream);
-              }
+                SaveToFiles(inputStream);
               LastDownloadedCoverUrl = CoverUrl;
+            } else if (response.StatusCode == (HttpStatusCode)308) {
+              string redirectUrl = response.Headers.Location.ToString();
+              response = httpClient.GetAsync(redirectUrl).Result;
+
+              if (response.StatusCode == HttpStatusCode.OK) {
+                using (Stream inputStream = response.Content.ReadAsStreamAsync().Result)
+                  SaveToFiles(inputStream);
+                LastDownloadedCoverUrl = CoverUrl;
+              } else {
+                LastFailedCoverUrl = CoverUrl;
+              }
             } else {
               LastFailedCoverUrl = CoverUrl;
+              WNPRedux.Log(WNPRedux.LogType.Error, $"WebNowPlaying.dll - Unable to get album art from: {CoverUrl}. Response status code: {response.StatusCode}");
             }
-          } else {
-            LastFailedCoverUrl = CoverUrl;
-            WNPRedux.Log(WNPRedux.LogType.Error, $"WebNowPlaying.dll - Unable to get album art from: {CoverUrl}. Response status code: {response.StatusCode}");
           }
         }
       }
+      isInThread = false;
     }
 
     static int MeasureCount = 0;
     internal Measure(API api) {
       ++MeasureCount;
       try {
-        if (rainmeterFileSettingsLocation != api.GetSettingsFile())
-          rainmeterFileSettingsLocation = api.GetSettingsFile();
-
         System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
         System.Diagnostics.FileVersionInfo fvi = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
         string adapterVersion = fvi.FileVersion;
@@ -111,6 +130,9 @@ namespace WebNowPlaying {
     }
 
     internal virtual void Dispose() {
+      if (_CoverPath.Length > 0) {
+        CoverPathDictionary.AddOrUpdate(_CoverPath, 0, (key, oldValue) => oldValue - 1);
+      }
       --MeasureCount;
       if (MeasureCount == 0) WNPRedux.Close();
     }
@@ -121,14 +143,17 @@ namespace WebNowPlaying {
         playerType = (PlayerTypes) Enum.Parse(typeof(PlayerTypes), playerTypeString, true);
 
         if (playerType == PlayerTypes.Cover) {
-          string temp = api.ReadPath("CoverPath", null);
-          // Only set CoverOutputLocation if it hasn't already been set
-          // Otherwise it changes it when a new skin loads WebNowPlaying
-          bool isCoverDefaultLocation = CoverOutputLocation == Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Temp\\Rainmeter\\WebNowPlaying\\cover.png";
-          if (isCoverDefaultLocation && temp.Length > 0) CoverOutputLocation = temp;
-          temp = api.ReadPath("DefaultPath", null);
-          if (temp.Length > 0) CoverDefaultLocation = temp;
-        } else if (playerType == PlayerTypes.Progress) {
+          string DefaultPath = api.ReadPath("DefaultPath", "");
+          if (DefaultPath.Length > 0) CoverDefaultLocation = DefaultPath;
+
+          if (_CoverPath.Length == 0) {
+            string CoverPath = api.ReadPath("CoverPath", "");
+            if (CoverPath.Length > 0) {
+              CoverPathDictionary.AddOrUpdate(CoverPath, 1, (key, oldValue) => oldValue + 1);
+              _CoverPath = CoverPath;
+            }
+          }
+        } else if (playerType == PlayerTypes.Progress || playerType == PlayerTypes.Volume) {
           maxValue = 100;
         }
       } catch (Exception e) {
@@ -253,10 +278,10 @@ namespace WebNowPlaying {
             return WNPRedux.mediaInfo.Album;
           case PlayerTypes.Cover:
             if (WNPRedux.mediaInfo.CoverUrl.Length > 0 && LastDownloadedCoverUrl == WNPRedux.mediaInfo.CoverUrl && Uri.IsWellFormedUriString(WNPRedux.mediaInfo.CoverUrl, UriKind.RelativeOrAbsolute))
-              return CoverOutputLocation.Replace("/", "\\");
-            else if (CoverDefaultLocation.Length > 0)
+              return (_CoverPath.Length > 0 ? _CoverPath : DefaultCoverOutputLocation).Replace("/", "\\");
+            else if (CoverDefaultLocation.Length > 0 && !isInThread)
               return CoverDefaultLocation.Replace("/", "\\");
-            return CoverOutputLocation.Replace("/", "\\");
+            return (_CoverPath.Length > 0 ? _CoverPath : DefaultCoverOutputLocation).Replace("/", "\\");
           case PlayerTypes.CoverWebAddress:
             return WNPRedux.mediaInfo.CoverUrl;
           case PlayerTypes.Position:
