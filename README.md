@@ -30,7 +30,7 @@ String returning the path to the current cover art, or the path to the default c
 **Note:** Do not assume the image will always be a square. It won't in most cases.  
 **Attributes:**  
 DefaultPath - A system path to what image to use as fallback.  
-~~CoverPath - A system path where the cover image is stored if no other skin registered it first. There is no guarantee for the image to be saved here, do not use it.~~
+CoverPath (**Legacy, do not use**) - A system path where the cover image is stored.
 
 ## Bangs
 Name | Parameters | Description
