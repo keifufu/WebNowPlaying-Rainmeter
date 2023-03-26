@@ -54,52 +54,63 @@ namespace WebNowPlaying {
     private static void DownloadImageThread() {
       lock (_lock) {
         string CoverUrl = WNPRedux.mediaInfo.CoverUrl;
+        try {
 
-        ServicePointManager.ServerCertificateValidationCallback = (s, cert, chain, ssl) => true;
-        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
+          ServicePointManager.ServerCertificateValidationCallback = (s, cert, chain, ssl) => true;
+          ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
 
-        void SaveToFiles(Stream inputStream) {
-          // Write to all cover paths for backwards compatibility, this also includes the default path
-          foreach (KeyValuePair<string, int> entry in CoverPathDictionary) {
-            if (entry.Value > 0) {
-              // Make sure the path exists
-              Directory.CreateDirectory(entry.Key.Substring(0, entry.Key.LastIndexOf("\\")));
-              using (Stream outputStream = File.OpenWrite(entry.Key)) {
-                inputStream.Position = 0;
-                inputStream.CopyTo(outputStream);
+          void SaveToFiles(Stream inputStream) {
+            // Write to all cover paths for backwards compatibility, this also includes the default path
+            foreach (KeyValuePair<string, int> entry in CoverPathDictionary) {
+              if (entry.Value > 0) {
+                // Make sure the path exists
+                try {
+                  Directory.CreateDirectory(entry.Key.Substring(0, entry.Key.LastIndexOf("\\")));
+                  using (Stream outputStream = File.OpenWrite(entry.Key)) {
+                    inputStream.Position = 0;
+                    inputStream.CopyTo(outputStream);
+                  }
+                } catch (Exception e) {
+                  WNPRedux.Log(WNPRedux.LogType.Error, $"WebNowPlaying.dll - Failed to write to path: {entry.Key}");
+                  WNPRedux.Log(WNPRedux.LogType.Debug, $"WebNowPlaying Trace: {e}");
+                }
               }
             }
           }
-        }
 
-        using (var httpClientHandler = new HttpClientHandler()) {
-          httpClientHandler.AllowAutoRedirect = true;
-          httpClientHandler.MaxAutomaticRedirections = 3;
-          using (var httpClient = new HttpClient(httpClientHandler)) {
-            HttpResponseMessage response = httpClient.GetAsync(CoverUrl).Result;
-
-            if (response.StatusCode == HttpStatusCode.OK) {
-              using (Stream inputStream = response.Content.ReadAsStreamAsync().Result)
-                SaveToFiles(inputStream);
-              LastDownloadedCoverUrl = CoverUrl;
-            } else if (response.StatusCode == (HttpStatusCode)308) {
-              string redirectUrl = response.Headers.Location.ToString();
-              response = httpClient.GetAsync(redirectUrl).Result;
+          using (var httpClientHandler = new HttpClientHandler()) {
+            httpClientHandler.AllowAutoRedirect = true;
+            httpClientHandler.MaxAutomaticRedirections = 3;
+            using (var httpClient = new HttpClient(httpClientHandler)) {
+              HttpResponseMessage response = httpClient.GetAsync(CoverUrl).Result;
 
               if (response.StatusCode == HttpStatusCode.OK) {
                 using (Stream inputStream = response.Content.ReadAsStreamAsync().Result)
                   SaveToFiles(inputStream);
                 LastDownloadedCoverUrl = CoverUrl;
+              } else if (response.StatusCode == (HttpStatusCode)308) {
+                string redirectUrl = response.Headers.Location.ToString();
+                response = httpClient.GetAsync(redirectUrl).Result;
+
+                if (response.StatusCode == HttpStatusCode.OK) {
+                  using (Stream inputStream = response.Content.ReadAsStreamAsync().Result)
+                    SaveToFiles(inputStream);
+                  LastDownloadedCoverUrl = CoverUrl;
+                } else {
+                  LastFailedCoverUrl = CoverUrl;
+                }
               } else {
                 LastFailedCoverUrl = CoverUrl;
+                WNPRedux.Log(WNPRedux.LogType.Error, $"WebNowPlaying.dll - Unable to get album art from: {CoverUrl}. Response status code: {response.StatusCode}");
               }
-            } else {
-              LastFailedCoverUrl = CoverUrl;
-              WNPRedux.Log(WNPRedux.LogType.Error, $"WebNowPlaying.dll - Unable to get album art from: {CoverUrl}. Response status code: {response.StatusCode}");
             }
           }
+        } catch (Exception e) {
+          WNPRedux.Log(WNPRedux.LogType.Error, $"WebNowPLaying.dll - Unexpected error downloading {CoverUrl}");
+          WNPRedux.Log(WNPRedux.LogType.Debug, $"WebNowPlaying Trace: {e}");
         }
       }
+        
       isInThread = false;
     }
 
