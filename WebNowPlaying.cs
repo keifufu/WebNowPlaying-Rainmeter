@@ -294,7 +294,9 @@ namespace WebNowPlaying {
               return CoverDefaultLocation.Replace("/", "\\");
             return (_CoverPath.Length > 0 ? _CoverPath : DefaultCoverOutputLocation).Replace("/", "\\");
           case PlayerTypes.CoverWebAddress:
-            return WNPRedux.mediaInfo.CoverUrl;
+            // CoverWebAddress is only supposed to update once the cover has been downloaded,
+            // so we return LastDownloadedCoverUrl instead of WNPRedux.mediaInfo.CoverUrl
+            return LastDownloadedCoverUrl;
           case PlayerTypes.Position:
             return WNPRedux.mediaInfo.Position;
           case PlayerTypes.Duration:
