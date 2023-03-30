@@ -1,14 +1,14 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using Rainmeter;
-using System.Linq;
-using System.Net.Http;
-using System.IO;
-using WNPReduxAdapterLibrary;
-using System.Net;
+﻿using Rainmeter;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Net;
+using System.Runtime.InteropServices;
 using System.Threading;
+using System;
+using WNPReduxAdapterLibrary;
 
 namespace WebNowPlaying {
   internal class Measure {
@@ -59,21 +59,23 @@ namespace WebNowPlaying {
           ServicePointManager.ServerCertificateValidationCallback = (s, cert, chain, ssl) => true;
           ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
 
-          void SaveToFiles(Stream inputStream) {
-            // Write to all cover paths for backwards compatibility, this also includes the default path
-            foreach (KeyValuePair<string, int> entry in CoverPathDictionary) {
-              if (entry.Value > 0) {
-                // Make sure the path exists
-                try {
-                  Directory.CreateDirectory(entry.Key.Substring(0, entry.Key.LastIndexOf("\\")));
-                  using (Stream outputStream = File.OpenWrite(entry.Key)) {
-                    inputStream.Position = 0;
-                    inputStream.CopyTo(outputStream);
+          void SaveToFiles(HttpResponseMessage response) {
+            using (Stream inputStream = response.Content.ReadAsStreamAsync().Result) {
+              // Write to all cover paths for backwards compatibility, this also includes the default path
+              foreach (KeyValuePair<string, int> entry in CoverPathDictionary) {
+                if (entry.Value > 0) {
+                  // Make sure the path exists
+                  try {
+                    Directory.CreateDirectory(entry.Key.Substring(0, entry.Key.LastIndexOf("\\")));
+                    using (Stream outputStream = File.Open(entry.Key, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite)) {
+                      inputStream.Position = 0;
+                      inputStream.CopyTo(outputStream);
+                    }
+                  } catch (Exception e) {
+                    LastFailedCoverUrl = CoverUrl;
+                    WNPRedux.Log(WNPRedux.LogType.Error, $"WebNowPlaying.dll - Failed to write to path: {entry.Key}");
+                    WNPRedux.Log(WNPRedux.LogType.Debug, $"WebNowPlaying.dll - Error Trace: {e}");
                   }
-                } catch (Exception e) {
-                  LastFailedCoverUrl = CoverUrl;
-                  WNPRedux.Log(WNPRedux.LogType.Error, $"WebNowPlaying.dll - Failed to write to path: {entry.Key}");
-                  WNPRedux.Log(WNPRedux.LogType.Debug, $"WebNowPlaying.dll - Error Trace: {e}");
                 }
               }
             }
@@ -86,19 +88,18 @@ namespace WebNowPlaying {
               HttpResponseMessage response = httpClient.GetAsync(CoverUrl).Result;
 
               if (response.StatusCode == HttpStatusCode.OK) {
-                using (Stream inputStream = response.Content.ReadAsStreamAsync().Result)
-                  SaveToFiles(inputStream);
+                SaveToFiles(response);
                 LastDownloadedCoverUrl = CoverUrl;
               } else if (response.StatusCode == (HttpStatusCode)308) {
                 string redirectUrl = response.Headers.Location.ToString();
                 response = httpClient.GetAsync(redirectUrl).Result;
 
                 if (response.StatusCode == HttpStatusCode.OK) {
-                  using (Stream inputStream = response.Content.ReadAsStreamAsync().Result)
-                    SaveToFiles(inputStream);
+                  SaveToFiles(response);
                   LastDownloadedCoverUrl = CoverUrl;
                 } else {
                   LastFailedCoverUrl = CoverUrl;
+                  WNPRedux.Log(WNPRedux.LogType.Error, $"WebNowPlaying.dll - Unable to get album art from: {CoverUrl}. Response status code: {response.StatusCode}");
                 }
               } else {
                 LastFailedCoverUrl = CoverUrl;
