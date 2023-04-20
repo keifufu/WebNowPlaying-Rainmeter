@@ -23,6 +23,7 @@ namespace WebNowPlaying {
       CoverWebAddress,
       Duration,
       Position,
+      Remaining,
       Progress,
       Volume,
       State,
@@ -116,6 +117,17 @@ namespace WebNowPlaying {
       }
         
       isInThread = false;
+    }
+
+    private static string GetRemaining()
+    {
+      int remainingSeconds = WNPRedux.mediaInfo.DurationSeconds - WNPRedux.mediaInfo.PositionSeconds;
+      TimeSpan remainingTime = TimeSpan.FromSeconds(remainingSeconds);
+
+      string formattedTime;
+      if (remainingTime.TotalHours < 1) formattedTime = remainingTime.ToString(@"mm\:ss");
+      else formattedTime = remainingTime.ToString(@"hh\:mm\:ss");
+      return formattedTime;
     }
 
     static int MeasureCount = 0;
@@ -306,6 +318,8 @@ namespace WebNowPlaying {
             return WNPRedux.mediaInfo.Position;
           case PlayerTypes.Duration:
             return WNPRedux.mediaInfo.Duration;
+          case PlayerTypes.Remaining:
+            return GetRemaining();
         }
       } catch (Exception e) {
         WNPRedux.Log(WNPRedux.LogType.Error, "WebNowPlaying.dll - Error doing getString cycle");
