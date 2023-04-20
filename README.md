@@ -19,6 +19,7 @@ Name | Default | Description
 `CoverWebAddress` | "" | URL of the current cover image, useful for doing an onChangeAction as cover will update twice when when the media changes. This will only update once and only once the image has been downloaded to the disk.
 `Duration` | "0:00" | Duration in (hh):mm:ss (Hours are optional)
 `Position` | "0:00" | Position in (hh):mm:ss (Hours are optional)
+`Remaining` | "0:00" | Position in (hh):mm:ss (Hours are optional)
 `Progress` | 0.0 | Position in percent. To clarify it's formatted ##.##### and has a predefined max of 100.00
 `Volume` | 100 | Volume from 1-100
 `Rating` | 0 | Rating from 0-5; Thumbs Up = 5; Thumbs Down = 1; Unrated = 0;
