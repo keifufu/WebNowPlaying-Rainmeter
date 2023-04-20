@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System;
 using WNPReduxAdapterLibrary;
+using System.Globalization;
 
 namespace WebNowPlaying {
   internal class Measure {
@@ -199,13 +200,13 @@ namespace WebNowPlaying {
         } else if (bang.Contains("setposition ")) {
           try {
             if (bang.Contains("+")) {
-              double percent = Convert.ToDouble(bang.Substring(bang.IndexOf("+") + 1));
+              double percent = Convert.ToDouble(bang.Substring(bang.IndexOf("+") + 1), CultureInfo.InvariantCulture);
               WNPRedux.mediaEvents.ForwardPositionPercent(percent);
             } else if (bang.Contains("-")) {
-              double percent = Convert.ToDouble(bang.Substring(bang.IndexOf("-") + 1));
+              double percent = Convert.ToDouble(bang.Substring(bang.IndexOf("-") + 1), CultureInfo.InvariantCulture);
               WNPRedux.mediaEvents.RevertPositionPercent(percent);
             } else {
-              double percent = Convert.ToDouble(bang.Substring(bang.IndexOf("setposition ") + 12));
+              double percent = Convert.ToDouble(bang.Substring(bang.IndexOf("setposition ") + 12), CultureInfo.InvariantCulture);
               WNPRedux.mediaEvents.SetPositionPercent(percent);
             }
           } catch (Exception e) {
