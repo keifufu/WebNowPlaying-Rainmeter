@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="packages\ILMerge.3.0.41\build\ILMerge.props" Condition="Exists('packages\ILMerge.3.0.41\build\ILMerge.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -84,54 +83,33 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Net.Http" />
-    <Reference Include="System.Net.Http.Extensions, Version=2.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Net.Http.Primitives, Version=4.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Primitives.dll</HintPath>
-    </Reference>
     <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Xml" />
-    <Reference Include="WNPRedux-Adapter-Library, Version=1.0.7.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\WNPRedux-Adapter-Library.1.0.7\lib\net48\WNPRedux-Adapter-Library.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="WebNowPlaying.cs" />
+    <Compile Include="src\WebNowPlaying.cs" />
     <Compile Include="$(SolutionDir).\API\RainmeterAPI.cs" />
+    <Compile Include="src\WNPReduxAdapterLibraryExtensions\WNPReduxNative.cs" />
+    <Compile Include="src\WNPReduxAdapterLibrary\HttpServer.cs" />
+    <Compile Include="src\WNPReduxAdapterLibrary\MediaControls.cs" />
+    <Compile Include="src\WNPReduxAdapterLibrary\MediaInfo.cs" />
+    <Compile Include="src\WNPReduxAdapterLibrary\WNPRedux.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
-    <None Include="ILMerge.props" />
-    <None Include="packages.config" />
+    <PackageReference Include="Microsoft.Windows.SDK.Contracts">
+      <Version>10.0.25357-preview</Version>
+    </PackageReference>
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="ILMergeOrder.txt" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
   <PropertyGroup>
-    <PostBuildEvent>"$(SolutionDir).\API\DllExporter.exe" "$(ConfigurationName)" "$(PlatformName)" "$(TargetDir)\" "$(TargetFileName)"
-xcopy  "$(TargetDir)$(TargetFileName)" "%25appdata%25\Rainmeter\Plugins" /Y</PostBuildEvent>
+    <PostBuildEvent>
+      "$(SolutionDir).\API\DllExporter.exe" "$(ConfigurationName)" "$(PlatformName)" "$(TargetDir)\" "$(TargetFileName)"
+      xcopy  "$(TargetDir)$(TargetFileName)" "%25appdata%25\Rainmeter\Plugins" /Y
+    </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>taskkill /f /fi "imagename eq Rainmeter.exe"</PreBuildEvent>
   </PropertyGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('packages\ILMerge.3.0.41\build\ILMerge.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\ILMerge.3.0.41\build\ILMerge.props'))" />
-    <Error Condition="!Exists('packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
-    <Error Condition="!Exists('packages\MSBuild.ILMerge.Task.2.0.0-pre501\build\MSBuild.ILMerge.Task.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\MSBuild.ILMerge.Task.2.0.0-pre501\build\MSBuild.ILMerge.Task.targets'))" />
-  </Target>
-  <Import Project="packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
-  <Import Project="packages\MSBuild.ILMerge.Task.2.0.0-pre501\build\MSBuild.ILMerge.Task.targets" Condition="Exists('packages\MSBuild.ILMerge.Task.2.0.0-pre501\build\MSBuild.ILMerge.Task.targets')" />
 </Project>
