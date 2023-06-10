@@ -1,4 +1,4 @@
-﻿#pragma warning disable IDE0034
+#pragma warning disable IDE0034
 using TimelineProperties = Windows.Media.Control.GlobalSystemMediaTransportControlsSessionTimelineProperties;
 using MediaProperties = Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties;
 using PlaybackStatus = Windows.Media.Control.GlobalSystemMediaTransportControlsSessionPlaybackStatus;
@@ -56,6 +56,7 @@ namespace WNPReduxAdapterLibrary
       if (!isStarted) return;
       isStarted = false;
       WNPHttpServer.OnMessageHook -= OnMessageHook;
+      isOptimisticPositionThreadStarted = false;
       if (manager != null)
       {
         manager.SessionsChanged -= SessionsChanged_Native;
