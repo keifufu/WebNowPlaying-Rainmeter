@@ -27,15 +27,30 @@ namespace WNPReduxAdapterLibrary
     /// </summary>
     public static int clients = 0;
 
-    internal static bool _isUsingNativeAPIs = false;
+    internal static bool _isUsingNativeAPIs = true;
     /// <summary>
     /// Whether WNPRedux is pulling info from native APIs.  
     /// This is read-only, the actual value is set by the user.  
-    /// It's opt-in through the browser extensions settings panel.  
+    /// It's toggleable through the browser extensions settings panel.
+    /// As of 2.0.1 it's enabled by default.
     /// Read more about it here: https://github.com/keifufu/WebNowPlaying-Redux/blob/main/NativeAPIs.md
     /// </summary>
     public static bool isUsingNativeAPIs { get { return _isUsingNativeAPIs; } }
-    internal static readonly string useNativeAPIsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "WebNowPlaying", "use_native_apis");
+
+    internal static string GetWnpPath()
+    {
+      // Note: I was going to clean up the old unused folder here but that might conflict with older WNP adapters, so I won't.
+      if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+      {
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WebNowPlaying");
+      }
+      else
+      {
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config", "WebNowPlaying");
+      }
+    }
+
+    internal static readonly string disableNativeAPIsPath = Path.Combine(GetWnpPath(), "disable_native_apis");
 
     public static readonly ConcurrentDictionary<string, MediaInfo>
         mediaInfoDictionary = new ConcurrentDictionary<string, MediaInfo>();
@@ -69,7 +84,7 @@ namespace WNPReduxAdapterLibrary
         _logger = logger;
         adapterVersion = version;
         _throttleLogs = throttleLogs;
-        _isUsingNativeAPIs = Directory.Exists(useNativeAPIsPath);
+        _isUsingNativeAPIs = !Directory.Exists(disableNativeAPIsPath);
         MediaInfo = new MediaInfo();
 
         WNPHttpServer.Start(port);

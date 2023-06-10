@@ -146,7 +146,7 @@ namespace WNPReduxAdapterLibrary
         response.Close();
         return;
       }
-      string filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "WebNowPlaying", fileName);
+      string filePath = Path.Combine(GetWnpPath(), fileName);
 
       if (!File.Exists(filePath))
       {
@@ -206,10 +206,10 @@ namespace WNPReduxAdapterLibrary
         if (type == "USE_NATIVE_APIS")
         {
           _isUsingNativeAPIs = bool.Parse(data);
-          if (_isUsingNativeAPIs && !Directory.Exists(useNativeAPIsPath))
-            Directory.CreateDirectory(useNativeAPIsPath);
-          else if (!_isUsingNativeAPIs && Directory.Exists(useNativeAPIsPath))
-            Directory.Delete(useNativeAPIsPath);
+          if (_isUsingNativeAPIs && Directory.Exists(disableNativeAPIsPath))
+            Directory.Delete(disableNativeAPIsPath);
+          else if (!_isUsingNativeAPIs && !Directory.Exists(disableNativeAPIsPath))
+            Directory.CreateDirectory(disableNativeAPIsPath);
           UpdateMediaInfo();
           return;
         }
