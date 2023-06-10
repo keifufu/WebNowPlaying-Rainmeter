@@ -1,4 +1,4 @@
-#pragma warning disable IDE0034
+﻿#pragma warning disable IDE0034
 using TimelineProperties = Windows.Media.Control.GlobalSystemMediaTransportControlsSessionTimelineProperties;
 using MediaProperties = Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties;
 using PlaybackStatus = Windows.Media.Control.GlobalSystemMediaTransportControlsSessionPlaybackStatus;
@@ -242,7 +242,7 @@ namespace WNPReduxAdapterLibrary
         await reader.LoadAsync((uint)stream.Size);
         reader.ReadBytes(bytes);
         MemoryStream mStream = new MemoryStream(bytes);
-        string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "WebNowPlaying");
+        string folderPath = WNPRedux.GetWnpPath();
         if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
         string coverPath = Path.Combine(folderPath, $"cover-{port}.jpg");
         File.WriteAllBytes(coverPath, mStream.ToArray());
