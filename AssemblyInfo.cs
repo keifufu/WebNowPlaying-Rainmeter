@@ -1,8 +1,7 @@
 ﻿using System.Reflection;
 
 [assembly: AssemblyCopyright("© 2023 - keifufu, Trevor Hamilton")]
-// TODO: remove .1 the next bump, specify only the first three (x.x.x)
-[assembly: AssemblyVersion("2.0.0.1")]
+[assembly: AssemblyVersion("2.0.1")]
 
 // Do not change the entries below!
 #if X64
