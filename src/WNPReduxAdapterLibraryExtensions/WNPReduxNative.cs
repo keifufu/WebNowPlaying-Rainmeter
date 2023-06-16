@@ -258,8 +258,6 @@ namespace WNPReduxAdapterLibrary
         reader.DetachStream();
         await stream.FlushAsync();
 
-        API.LSLog(1, "", Environment.OSVersion.Version.Major.ToString());
-
         if (cropImage)
         {
           CropCover(croppedCoverPath, coverPath);
