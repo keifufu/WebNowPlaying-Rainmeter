@@ -14,6 +14,9 @@ using System.Threading;
 using System.Linq;
 using System.IO;
 using System;
+using Rainmeter;
+using System.Drawing.Imaging;
+using System.Drawing;
 
 namespace WNPReduxAdapterLibrary
 {
@@ -40,6 +43,7 @@ namespace WNPReduxAdapterLibrary
     static bool isOptimisticPositionThreadStarted = false;
     static readonly string idPrefix = "WNPReduxNativeWindows_";
     static readonly Dictionary<string, Session> sessions = new Dictionary<string, Session>();
+    static readonly bool isWindows10 = Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Build >= 19041 && Environment.OSVersion.Version.Build < 22000;
 
     public static void Start(int port)
     {
@@ -217,7 +221,7 @@ namespace WNPReduxAdapterLibrary
       try
       {
         MediaProperties info = await session.TryGetMediaPropertiesAsync();
-        string CoverUrl = await WriteThumbnail(info.Thumbnail);
+        string CoverUrl = await WriteThumbnail(info.Thumbnail, session.SourceAppUserModelId);
         MediaInfo mediaInfo = GetMediaInfo(session.SourceAppUserModelId);
         mediaInfo.CoverUrl = CoverUrl;
         mediaInfo.Title = info.Title;
@@ -231,28 +235,58 @@ namespace WNPReduxAdapterLibrary
       }
     }
 
-    static async Task<string> WriteThumbnail(IRandomAccessStreamReference thumbnail)
+    static async Task<string> WriteThumbnail(IRandomAccessStreamReference thumbnail, string appId)
     {
       if (thumbnail == null) return "";
       try
       {
+        bool cropImage = isWindows10 && appId.ToLower().Contains("spotify");
+
         var stream = await thumbnail.OpenReadAsync();
         var bytes = new byte[stream.Size];
         var reader = new DataReader(stream.GetInputStreamAt(0));
         await reader.LoadAsync((uint)stream.Size);
         reader.ReadBytes(bytes);
         MemoryStream mStream = new MemoryStream(bytes);
+
         string folderPath = WNPRedux.GetWnpPath();
         if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
         string coverPath = Path.Combine(folderPath, $"cover-{port}.jpg");
-        File.WriteAllBytes(coverPath, mStream.ToArray());
+        string croppedCoverPath = Path.Combine(folderPath, $"cover-{port}-temp.jpg");
+
+        File.WriteAllBytes(cropImage ? croppedCoverPath : coverPath, mStream.ToArray());
         reader.DetachStream();
         await stream.FlushAsync();
+
+        API.LSLog(1, "", Environment.OSVersion.Version.Major.ToString());
+
+        if (cropImage)
+        {
+          CropCover(croppedCoverPath, coverPath);
+        }
+
         return $"http://127.0.0.1:{port}/cover?name=cover-{port}.jpg&r={new Random().Next(999999)}";
       }
       catch
       {
         return "";
+      }
+    }
+    
+    private static void CropCover(string path, string savePath)
+    {
+      using (var b = new Bitmap(300, 300))
+      {
+        using (var g = Graphics.FromImage(b))
+        {
+          using (var cover = new Bitmap(path))
+          {
+            var r = new Rectangle(0, 0, 300, 300);
+            g.DrawImage(cover, r, 33, 0, 233, 233, GraphicsUnit.Pixel);
+          }
+        }
+
+        b.Save(savePath, ImageFormat.Jpeg);
       }
     }
 
