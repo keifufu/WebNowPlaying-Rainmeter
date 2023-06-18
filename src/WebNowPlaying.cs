@@ -202,7 +202,7 @@ namespace WebNowPlaying
           }
         }
 
-        WNPRedux.Start(8974, adapterVersion, logger, false);
+        WNPRedux.Start(8974, adapterVersion, logger, true);
         WNPReduxNative.Start(8974);
       }
       catch (Exception e)
