@@ -91,6 +91,8 @@ namespace WebNowPlaying
                       Directory.CreateDirectory(entry.Key.Substring(0, entry.Key.LastIndexOf("\\")));
                       using (Stream fileStream = File.Open(entry.Key, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite))
                       {
+                        // WHY WAS THIS GONE? WHO KNOWS! MUST'VE BEEN BROKEN FOR WEEKS!
+                        inputStream.Position = 0;
                         inputStream.CopyTo(fileStream);
                       }
                       break;
@@ -200,7 +202,7 @@ namespace WebNowPlaying
           }
         }
 
-        WNPRedux.Start(8974, adapterVersion, logger, true);
+        WNPRedux.Start(8974, adapterVersion, logger, false);
         WNPReduxNative.Start(8974);
       }
       catch (Exception e)
