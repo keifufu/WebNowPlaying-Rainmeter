@@ -40,7 +40,8 @@ namespace WNPReduxAdapterLibrary
     private static int port = 0;
     static SessionManager manager = null;
     static int lastPositionSeconds = 0;
-    static bool isOptimisticPositionThreadStarted = false;
+    private static Timer optimisticUpdateTimer;
+    private static readonly object timerLock = new object();
     static readonly string idPrefix = "WNPReduxNativeWindows_";
     static readonly Dictionary<string, Session> sessions = new Dictionary<string, Session>();
     static readonly bool isWindows10 = Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Build >= 19041 && Environment.OSVersion.Version.Build < 22000;
@@ -52,7 +53,7 @@ namespace WNPReduxAdapterLibrary
       WNPReduxNative.port = port;
       WNPHttpServer.OnMessageHook += OnMessageHook;
       new Thread(StartWindowsAPIThreaded).Start();
-      new Thread(OptimisticPositionThread).Start();
+      optimisticUpdateTimer = new Timer(PerformOptimisticUpdate, null, Timeout.Infinite, Timeout.Infinite);
     }
 
     public static void Stop()
@@ -60,7 +61,8 @@ namespace WNPReduxAdapterLibrary
       if (!isStarted) return;
       isStarted = false;
       WNPHttpServer.OnMessageHook -= OnMessageHook;
-      isOptimisticPositionThreadStarted = false;
+      optimisticUpdateTimer.Dispose();
+      optimisticUpdateTimer = null;
       if (manager != null)
       {
         manager.SessionsChanged -= SessionsChanged_Native;
@@ -75,11 +77,11 @@ namespace WNPReduxAdapterLibrary
       sessions.Clear();
     }
 
-    private static void OptimisticPositionThread()
+    private static void PerformOptimisticUpdate(object state)
     {
-      if (isOptimisticPositionThreadStarted) return;
-      isOptimisticPositionThreadStarted = true;
-      while (isStarted)
+      if (!isStarted) return;
+
+      lock (timerLock)
       {
         if (WNPRedux.MediaInfo._ID.StartsWith(idPrefix) && WNPRedux.MediaInfo.State == MediaInfo.StateMode.PLAYING)
         {
@@ -95,7 +97,6 @@ namespace WNPReduxAdapterLibrary
             WNPRedux.MediaInfo.PositionPercent = 100;
           }
         }
-        Thread.Sleep(1000);
       }
     }
 
@@ -270,7 +271,7 @@ namespace WNPReduxAdapterLibrary
         return "";
       }
     }
-    
+
     private static void CropCover(string path, string savePath)
     {
       using (var b = new Bitmap(300, 300))
@@ -320,6 +321,8 @@ namespace WNPReduxAdapterLibrary
       mediaInfo.DurationSeconds = Convert.ToInt32(info.EndTime.TotalSeconds);
       mediaInfo.Duration = WNPRedux.TimeInSecondsToString(mediaInfo.DurationSeconds);
 
+      if (lastPositionSeconds == Convert.ToInt32(info.Position.TotalSeconds)) return;
+
       lastPositionSeconds = Convert.ToInt32(info.Position.TotalSeconds);
       mediaInfo.PositionSeconds = lastPositionSeconds;
       mediaInfo.Position = WNPRedux.TimeInSecondsToString(mediaInfo.PositionSeconds);
@@ -333,6 +336,8 @@ namespace WNPReduxAdapterLibrary
         mediaInfo.PositionPercent = 100;
       }
       WNPRedux.UpdateMediaInfo();
+
+      optimisticUpdateTimer.Change(1000, 1000);
     }
   }
 }
