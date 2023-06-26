@@ -121,8 +121,6 @@ namespace WNPReduxAdapterLibrary
         string type = parts[0];
         string data = parts.Length > 1 ? parts[1] : "";
 
-        WNPRedux.Log(LogType.Warning, data);
-
         switch (type)
         {
           case "TRY_SET_STATE":
