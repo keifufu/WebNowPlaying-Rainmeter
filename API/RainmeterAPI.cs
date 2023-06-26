@@ -63,7 +63,7 @@ namespace Rainmeter
         private extern static IntPtr RmGet(IntPtr rm, RmGetType type);
 
         [DllImport("Rainmeter.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        private extern static int LSLog(int type, string unused, string message);
+        public extern static int LSLog(int type, string unused, string message);
 
         [DllImport("Rainmeter.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall)]
         private extern static int RmLog(IntPtr rm, LogType type, string message);

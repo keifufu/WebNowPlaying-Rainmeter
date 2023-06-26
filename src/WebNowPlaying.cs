@@ -193,12 +193,14 @@ namespace WebNowPlaying
         {
           switch (type)
           {
+            // Don't use api.Log as it will come from the wrong source
+            // which will be the first skin registering WebNowPlaying
             case LogType.Debug:
-              api.Log(API.LogType.Debug, message); break;
+              API.LSLog(4, "", message); break;
             case LogType.Warning:
-              api.Log(API.LogType.Warning, message); break;
+              API.LSLog(2, "", message); break;
             case LogType.Error:
-              api.Log(API.LogType.Error, message); break;
+              API.LSLog(1, "", message); break;
           }
         }
 
