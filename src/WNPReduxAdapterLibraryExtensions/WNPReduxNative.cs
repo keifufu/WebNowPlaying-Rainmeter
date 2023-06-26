@@ -9,14 +9,13 @@ using AutoRepeatMode = Windows.Media.MediaPlaybackAutoRepeatMode;
 using System.Collections.Generic;
 using Windows.Storage.Streams;
 using System.Threading.Tasks;
+using System.Drawing.Imaging;
 using Windows.Media.Control;
 using System.Threading;
+using System.Drawing;
 using System.Linq;
 using System.IO;
 using System;
-using Rainmeter;
-using System.Drawing.Imaging;
-using System.Drawing;
 
 namespace WNPReduxAdapterLibrary
 {
@@ -122,6 +121,8 @@ namespace WNPReduxAdapterLibrary
         string type = parts[0];
         string data = parts.Length > 1 ? parts[1] : "";
 
+        WNPRedux.Log(LogType.Warning, data);
+
         switch (type)
         {
           case "TRY_SET_STATE":
@@ -132,7 +133,7 @@ namespace WNPReduxAdapterLibrary
             }
           case "TRY_SKIP_PREVIOUS": await session.TrySkipPreviousAsync(); break;
           case "TRY_SKIP_NEXT": await session.TrySkipNextAsync(); break;
-          case "TRY_SET_POSITION": await session.TryChangePlaybackPositionAsync(Convert.ToInt32(data.Split(':').First()) * 10_000_000); break;
+          case "TRY_SET_POSITION": await session.TryChangePlaybackPositionAsync(Convert.ToInt64(data.Split(':').First()) * 10_000_000); break;
           case "TRY_SET_VOLUME": break;
           case "TRY_TOGGLE_REPEAT_MODE": await session.TryChangeAutoRepeatModeAsync(mediaInfo.RepeatMode == MediaInfo.RepeatModeEnum.NONE ? AutoRepeatMode.List : mediaInfo.RepeatMode == MediaInfo.RepeatModeEnum.ALL ? AutoRepeatMode.Track : AutoRepeatMode.None); break;
           case "TRY_TOGGLE_SHUFFLE_ACTIVE": await session.TryChangeShuffleActiveAsync(!mediaInfo.ShuffleActive); break;
