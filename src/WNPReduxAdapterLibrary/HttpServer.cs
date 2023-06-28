@@ -241,7 +241,7 @@ namespace WNPReduxAdapterLibrary
           }
           else
           {
-            mediaInfo.PositionPercent = 100;
+            mediaInfo.PositionPercent = 0;
           }
         }
         else if (type == "VOLUME") mediaInfo.Volume = Convert.ToInt16(data);
