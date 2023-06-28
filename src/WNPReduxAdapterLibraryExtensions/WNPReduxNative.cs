@@ -93,7 +93,7 @@ namespace WNPReduxAdapterLibrary
           }
           else
           {
-            WNPRedux.MediaInfo.PositionPercent = 100;
+            WNPRedux.MediaInfo.PositionPercent = 0;
           }
         }
       }
