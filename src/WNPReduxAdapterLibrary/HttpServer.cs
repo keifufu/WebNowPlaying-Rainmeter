@@ -102,7 +102,10 @@ namespace WNPReduxAdapterLibrary
         OnDisconnect(clientId);
         clients.Remove(clientId);
         WNPRedux.clients--;
-        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+        try
+        {
+          await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+        } catch { }
       }
     }
 
