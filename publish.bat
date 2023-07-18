@@ -22,4 +22,4 @@ mkdir dist
 xcopy /Y /I x64\Release\WebNowPlaying.dll dist\WebNowPlaying-x64.dll* > nul
 xcopy /Y /I x86\Release\WebNowPlaying.dll dist\WebNowPlaying-x86.dll* > nul
 ECHO Packaging...
-mond package -Config WebNowPlayingReduxExample -Author "keifufu, tjhrulz" -PackageVersion %version% -OutPath %~dp0\dist\WebNowPlayingRedux_%version%.rmskin > nul
+mond package -Skin WebNowPlayingRedux -Author "keifufu, tjhrulz" -PackageVersion %version% -MinimumRainmeter 4.5.0 -MinimumWindows 10.0 -OutDirectory %~dp0\dist > nul
