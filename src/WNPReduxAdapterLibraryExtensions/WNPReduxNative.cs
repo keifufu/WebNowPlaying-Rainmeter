@@ -166,15 +166,19 @@ namespace WNPReduxAdapterLibrary
       List<string> newSessions = new List<string>();
       foreach (Session session in _sessions)
       {
-        if (IsAppIdBlacklisted(session.SourceAppUserModelId)) continue;
-        MediaPropertiesChanged_Native(session);
-        PlaybackInfoChanged_Native(session);
-        TimelinePropertiesChanged_Native(session);
-        session.MediaPropertiesChanged += MediaPropertiesChanged_Native;
-        session.PlaybackInfoChanged += PlaybackInfoChanged_Native;
-        session.TimelinePropertiesChanged += TimelinePropertiesChanged_Native;
-        sessions.Add(session.SourceAppUserModelId, session);
-        newSessions.Add(session.SourceAppUserModelId);
+        // It _might_ be possible for two sessions to have the same SourceAppUserModelId, which would break this.
+        if (!sessions.ContainsKey(session.SourceAppUserModelId))
+        {
+          if (IsAppIdBlacklisted(session.SourceAppUserModelId)) continue;
+          MediaPropertiesChanged_Native(session);
+          PlaybackInfoChanged_Native(session);
+          TimelinePropertiesChanged_Native(session);
+          session.MediaPropertiesChanged += MediaPropertiesChanged_Native;
+          session.PlaybackInfoChanged += PlaybackInfoChanged_Native;
+          session.TimelinePropertiesChanged += TimelinePropertiesChanged_Native;
+          sessions.Add(session.SourceAppUserModelId, session);
+          newSessions.Add(session.SourceAppUserModelId);
+        }
       }
 
       List<string> keysToRemove = new List<string>();
