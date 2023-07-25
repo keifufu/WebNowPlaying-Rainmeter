@@ -269,13 +269,18 @@ namespace WebNowPlaying
       {
         string bang = args.ToLowerInvariant();
 
-        if (bang.Equals("playpause")) WNPRedux.MediaInfo.Controls.TryTogglePlayPause();
+        if (bang.Equals("play")) WNPRedux.MediaInfo.Controls.TryPlay();
+        else if (bang.Equals("pause")) WNPRedux.MediaInfo.Controls.TryPause();
+        else if (bang.Equals("playpause")) WNPRedux.MediaInfo.Controls.TryTogglePlayPause();
         else if (bang.Equals("next")) WNPRedux.MediaInfo.Controls.TrySkipNext();
         else if (bang.Equals("previous")) WNPRedux.MediaInfo.Controls.TrySkipPrevious();
-        else if (bang.Equals("repeat")) WNPRedux.MediaInfo.Controls.TryToggleRepeat();
+        // TODO: maybe support SetRepeat n?
+        else if (bang.Contains("repeat")) WNPRedux.MediaInfo.Controls.TryToggleRepeat();
+        // TODO: maybe support SetShuffle n?
         else if (bang.Equals("shuffle")) WNPRedux.MediaInfo.Controls.TryToggleShuffleActive();
         else if (bang.Equals("togglethumbsup")) WNPRedux.MediaInfo.Controls.TrySetRating(WNPRedux.MediaInfo.Rating == 5 ? 0 : 5);
         else if (bang.Equals("togglethumbsdown")) WNPRedux.MediaInfo.Controls.TrySetRating(WNPRedux.MediaInfo.Rating == 1 ? 0 : 1);
+        // tj renamed this from SetRating to Rating, so now we just check if it contains rating, not equals.
         else if (bang.Contains("rating "))
         {
           try
