@@ -2,7 +2,7 @@
 
 [assembly: AssemblyCopyright("© 2023 - keifufu, Trevor Hamilton")]
 // Important: Version number needs to have all 4 numbers for publish.bat
-[assembly: AssemblyVersion("2.0.6.0")]
+[assembly: AssemblyVersion("2.0.7.0")]
 
 // Do not change the entries below!
 #if X64
