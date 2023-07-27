@@ -211,6 +211,9 @@ namespace WNPReduxAdapterLibrary
       else if (id.Contains("opera")) return true;
       else if (id.Contains("brave")) return true;
       else if (id.Contains("vivaldi")) return true;
+      else if (id.Contains("firefox")) return true;
+      // AppIDs seem to be only used on Windows 11,
+      // Windows 10 still reports the exe name.
       else if (id.Contains("308046B0AF4A39CB".ToLower())) return true; // firefox
       else if (id.Contains("6F193CCC56814779".ToLower())) return true; // firefox nightly
       else if (id.Contains("6F940AC27A98DD61".ToLower())) return true; // waterfox
