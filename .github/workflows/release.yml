@@ -1,0 +1,76 @@
+name: Build and Release
+
+env:
+  VERSION: "0.0.0"
+  PRERELEASE: false
+
+on:
+  push:
+    paths:
+      - VERSION
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run build script
+        if: matrix.os != 'windows-latest'
+        run: ./build.sh
+
+      - name: Run build script (Windows)
+        if: matrix.os == 'windows-latest'
+        run: ./build.ps1
+        shell: pwsh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.os }}
+          path: ./dist
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [build]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Read VERSION file
+        id: read_version
+        run: |
+          VER=$(cat VERSION)
+          echo "VERSION=$VER" >> $GITHUB_ENV
+          if [[ "$VER" == *"alpha"* || "$VER" == *"beta"* ]]; then
+            echo "PRERELEASE=true" >> $GITHUB_ENV
+          else
+            echo "PRERELEASE=false" >> $GITHUB_ENV
+          fi
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Fixup artifacts
+        run: |
+          mkdir dist
+          mv dist*/** dist/
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ env.VERSION }}
+          name: v${{ env.VERSION }}
+          prerelease: ${{ env.PRERELEASE }}
+          files: |
+            ./dist/*
