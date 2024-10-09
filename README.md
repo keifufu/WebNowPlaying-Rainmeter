@@ -4,7 +4,7 @@ A Rainmeter adapter for [WebNowPlaying](https://github.com/keifufu/WebNowPlaying
 
 ## Installing
 
-Download from [Releases](https://github.com/keifufu/WebNowPlaying-Rainmeter/releases)
+Download from [Releases](https://github.com/keifufu/WebNowPlaying-Rainmeter/releases/latest)
 
 ## Documentation and Usage
 
