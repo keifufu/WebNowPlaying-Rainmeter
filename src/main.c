@@ -1,8 +1,15 @@
 #include "wnp.h"
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <windows.h>
 
-void __cdecl LSLog(int levle, LPCWSTR unused, LPCWSTR message);
+#include <dbghelp.h>
+
+// TODO: continue making webnowplayer have a simple next/prev player functionality, and update docs in that skin for v3 (and the actual docs ig)
+// once webnowplayer is done, replace the one in this repo with the one from documents/rainmeter/skins
+
+void __cdecl LSLog(int level, LPCWSTR unused, LPCWSTR message);
 void __stdcall RmLog(void* rm, int level, LPCWSTR message);
 void __cdecl RmLogF(void* rm, int level, LPCWSTR message, ...);
 LPCWSTR __stdcall RmReadString(void* rm, LPCWSTR option, LPCWSTR default_value, BOOL replace_measures);
@@ -125,18 +132,6 @@ enum PLAYER_TYPE parse_player_type(LPCWSTR str)
   return PT_STATUS;
 }
 
-int parse_player_id(void* rm, LPCWSTR str)
-{
-  wchar_t _str[WNP_STR_LEN] = {0};
-  wcscpy(_str, str);
-  wchar_t* str_lower = _wcslwr(_str);
-  if (wcscmp(str_lower, L"active") == 0) {
-    return -1;
-  } else {
-    return parse_int_from_lpcwstr(rm, str, -1);
-  }
-}
-
 int parse_int_from_lpcwstr(void* rm, LPCWSTR str, int default_return)
 {
   wchar_t* endPtr;
@@ -147,6 +142,18 @@ int parse_int_from_lpcwstr(void* rm, LPCWSTR str, int default_return)
     return default_return;
   }
   return (int)result;
+}
+
+int parse_player_id(void* rm, LPCWSTR str)
+{
+  wchar_t _str[WNP_STR_LEN] = {0};
+  wcscpy(_str, str);
+  wchar_t* str_lower = _wcslwr(_str);
+  if (wcscmp(str_lower, L"active") == 0) {
+    return -1;
+  } else {
+    return parse_int_from_lpcwstr(rm, str, -1);
+  }
 }
 
 typedef struct {
@@ -323,8 +330,7 @@ __declspec(dllexport) double Update(void* data)
       ret = player.id != -1;
     } break;
     case PT_PLAYER_COUNT: {
-      int num = wnp_get_all_players(NULL);
-      ret = num;
+      ret = wnp_get_all_players(NULL);
     } break;
     case PT_STATE:
       switch (player.state) {
@@ -475,7 +481,23 @@ bool get_string(measure_t* measure, char out[WNP_STR_LEN])
       wnp_format_seconds(wnp_get_remaining_seconds(&player), true, out);
       break;
     case PT_PLATFORM:
-      // TODO
+      switch (player.platform) {
+        case WNP_PLATFORM_NONE:
+          strncpy(out, "None", WNP_STR_LEN);
+          break;
+        case WNP_PLATFORM_WEB:
+          strncpy(out, "Web", WNP_STR_LEN);
+          break;
+        case WNP_PLATFORM_LINUX:
+          strncpy(out, "Linux", WNP_STR_LEN);
+          break;
+        case WNP_PLATFORM_DARWIN:
+          strncpy(out, "Darwin", WNP_STR_LEN);
+          break;
+        case WNP_PLATFORM_WINDOWS:
+          strncpy(out, "Windows", WNP_STR_LEN);
+          break;
+      }
       break;
     default:
       return false;
@@ -489,7 +511,7 @@ __declspec(dllexport) const wchar_t* GetString(void* data)
   measure_t* measure = (measure_t*)data;
 
   if (!should_measure_update_string(measure)) {
-    if (measure->last_string[0] == '\0') {
+    if (measure->last_string[0] == '\1') {
       return NULL;
     } else {
       return (const wchar_t*)&measure->last_string;
@@ -501,7 +523,7 @@ __declspec(dllexport) const wchar_t* GetString(void* data)
     wnp_utf8_to_utf16(str, strlen(str), measure->last_string, WNP_STR_LEN);
     return (const wchar_t*)&measure->last_string;
   } else {
-    measure->last_string[0] = '\0';
+    measure->last_string[0] = '\1';
   }
 
   return NULL;
@@ -524,7 +546,7 @@ __declspec(dllexport) void ExecuteBang(void* data, const wchar_t* args)
       RmLog(measure->rm, LOG_ERROR, L"[WebNowPlaying] Missing argument for SetState");
       return;
     }
-    enum wnp_state state = WNP_STATE_STOPPED;
+    wnp_state_t state = WNP_STATE_STOPPED;
     if (wcscmp(args, L"playing") == 0) {
       state = WNP_STATE_PLAYING;
     } else if (wcscmp(args, L"paused") == 0) {
@@ -619,7 +641,7 @@ __declspec(dllexport) void ExecuteBang(void* data, const wchar_t* args)
       RmLog(measure->rm, LOG_ERROR, L"[WebNowPlaying] Missing argument for SetRepeat");
       return;
     }
-    enum wnp_repeat repeat = WNP_REPEAT_NONE;
+    wnp_repeat_t repeat = WNP_REPEAT_NONE;
     if (wcscmp(args, L"none") == 0) {
       repeat = WNP_REPEAT_NONE;
     } else if (wcscmp(args, L"ALL") == 0) {
@@ -790,9 +812,89 @@ __declspec(dllexport) LPCWSTR GetNextPlayerId(void* data, int argc, LPCWSTR argv
   return buffer;
 }
 
+void log_to_event_viewer(const char* message)
+{
+  HANDLE hEventLog = RegisterEventSource(NULL, "WebNowPlaying");
+  const char* strings[1] = {message};
+
+  if (hEventLog) {
+    ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, 0, 0, NULL, 1, NULL, strings, NULL);
+    DeregisterEventSource(hEventLog);
+  }
+}
+
+#define MAX_ENTRIES 128
+#define MAX_MESSAGE_LENGTH 2048
+#define MAX_ENTRY_LENGTH 512
+
+void capture_stack_trace()
+{
+  void* stack[MAX_ENTRIES];
+  unsigned short frames;
+  char buffer[sizeof(SYMBOL_INFO) + 256 * sizeof(char)];
+  SYMBOL_INFO* symbol = (SYMBOL_INFO*)buffer;
+  HANDLE process = GetCurrentProcess();
+
+  SymInitialize(process, NULL, TRUE);
+  symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+  symbol->MaxNameLen = 255;
+
+  frames = CaptureStackBackTrace(0, MAX_ENTRIES, stack, NULL);
+
+  char* entries[MAX_ENTRIES];
+  int entry_count = 0;
+  int last_webnowplaying_index = -1;
+
+  for (unsigned short i = 8; i < frames; i++) {
+    DWORD64 addr = (DWORD64)(stack[i]);
+
+    if (SymFromAddr(process, addr, NULL, symbol)) {
+      char module_name[MAX_PATH];
+      DWORD64 base = SymGetModuleBase64(process, addr);
+      const char* base_name = NULL;
+
+      if (base) {
+        GetModuleFileNameA((HMODULE)base, module_name, sizeof(module_name));
+        base_name = strrchr(module_name, '\\');
+        base_name = base_name ? base_name + 1 : module_name;
+
+        entries[entry_count] = (char*)malloc(MAX_ENTRY_LENGTH);
+        snprintf(entries[entry_count], MAX_ENTRY_LENGTH, "%d: %s in %s", i - 8, symbol->Name, base_name);
+
+        if (strstr(base_name, "WebNowPlaying.DLL") != NULL) {
+          last_webnowplaying_index = entry_count;
+        }
+        entry_count++;
+      }
+    }
+  }
+
+  if (last_webnowplaying_index != -1) {
+    entry_count = last_webnowplaying_index + 1;
+  }
+
+  char message[MAX_MESSAGE_LENGTH] = "";
+  for (int i = 0; i < entry_count; i++) {
+    strcat(message, entries[i]);
+    if (i < entry_count - 1) {
+      strcat(message, "; ");
+    }
+    free(entries[i]);
+  }
+
+  log_to_event_viewer(message);
+}
+
+LONG WINAPI exception_handler(EXCEPTION_POINTERS* ExceptionInfo)
+{
+  capture_stack_trace();
+  return EXCEPTION_EXECUTE_HANDLER;
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
   if (fdwReason == DLL_PROCESS_ATTACH) {
+    SetUnhandledExceptionFilter(exception_handler);
     DisableThreadLibraryCalls(hinstDLL);
   }
   return true;

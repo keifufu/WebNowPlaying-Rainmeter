@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.29)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 project(wnprainmeter)
 file(READ "VERSION" PROJECT_VERSION)
 
@@ -45,9 +47,15 @@ add_compile_definitions(WNPRAINMETER_VERSION="${PROJECT_VERSION}")
 set(CMAKE_STATIC_LIBRARY_PREFIX "")
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES})
 
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  COMPILE_FLAGS "/Zi"
+  LINK_FLAGS "/DEBUG"
+)
+
 target_link_libraries(${PROJECT_NAME} PRIVATE libwnp::libwnp)
 
 target_link_libraries(${PROJECT_NAME}
   PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/deps/rainmeter_win${LIBRARY_SUFFIX}.lib"
+    dbghelp.lib
 )
